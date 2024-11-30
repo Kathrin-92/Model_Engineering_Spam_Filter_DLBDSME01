@@ -2,10 +2,9 @@
 # IMPORTS
 # ----------------------------------------------------------------------------------------------------------------------
 
-# standard library imports
+# third-party library imports
 import pandas as pd
 import matplotlib.pyplot as plt
-import numpy as np
 
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -22,11 +21,11 @@ data = pd.read_csv('data/raw/SMSSpamCollection.csv', sep='\t', header=None, name
 # data.head(5)
 
 # check for missing data using isnull
-print(data.isnull().sum()) # --> none found
+data.isnull().sum() # --> none found
 
 
 # ----------------------------------------------------------------------------------------------------------------------
-# DISTRIBUTION OF LABELS & REMOVE DUPLICATES
+# DISTRIBUTION OF LABELS
 # ----------------------------------------------------------------------------------------------------------------------
 
 label_distribution = data.groupby('label').size()
@@ -40,9 +39,8 @@ duplicate_counts_label = duplicates.groupby('label').size() # --> 503 ham, 181 s
 # print(duplicate_counts)
 # print(duplicate_counts_label)
 
-# most duplicate messages are labeled as "ham" suggesting they are likely artifacts from a non-clean dataset
-# they are therefore treated as noise and removed
-# drop duplicate entries with the same message
+# most duplicate messages are labeled as 'ham' suggesting they are likely artifacts from a non-clean dataset
+# they are therefore treated as noise and removed --> also applied in preprocessing_data.py
 data.drop_duplicates(subset='message', keep='last', inplace=True) # --> (5169, 2)
 data.groupby('label').describe()
 label_distribution_without_dups = data.groupby('label').size()
@@ -62,13 +60,12 @@ for i, count in enumerate(label_counts):
 # y-axis
 ax.set_ylabel('count', fontsize=10, weight='bold', loc='top', rotation='horizontal', labelpad = -20)
 ax.set_yticklabels([f'{int(x):,}' for x in ax.get_yticks()])
-
 # x-axis
 ax.set(xlabel='')
 ax.set_xticklabels(ax.get_xticklabels(), rotation='horizontal')
-
 # title
 ax.set_title('Distribution of Spam and Ham Labels', fontsize=14, weight='bold')
+# other
 ax.spines['top'].set_visible(False)
 ax.spines['right'].set_visible(False)
 
@@ -76,21 +73,96 @@ ax.spines['right'].set_visible(False)
 
 
 # ----------------------------------------------------------------------------------------------------------------------
-# WORD COUNTS & ROUGH CLEANING
+# TEXT LENGTH OF HAM VS SPAM
+# use char_count and char_count_cleansed columns from preprocessing
 # ----------------------------------------------------------------------------------------------------------------------
 
-# Wortlänge
-#word_length_spam
-#word_length_ham
+# read preprocessed data file
+data_df = pd.read_csv('data/processed/data_cleaned.csv', sep=',')
+print(data_df.head())
 
-# Wortanzahl pro Message
-#word_counts_spam
-#word_counts_ham
+# plot the 'char_count' column (raw character count)
+plt.figure(figsize=(13, 6))
+plt.subplot(1, 2, 1)
+plt.hist(data_df[data_df['label'] == 'ham']['char_count'], bins=25, alpha=0.5, label='ham', color='mediumseagreen', density=True)
+plt.hist(data_df[data_df['label'] == 'spam']['char_count'], bins=25, alpha=0.5, label='spam', color='tomato', density=True)
+# styling
+plt.legend()
+plt.ylabel(ylabel='frequency', fontsize=10, weight='bold')
+plt.xlabel(xlabel='character count', fontsize=10, weight='bold')
+plt.title('Character Count Distribution (normalized) - Raw', fontsize=12, weight='bold')
 
-# Die am häufigsten auftretendsten Wörter
+# plot the 'char_count_cleansed' column (cleaned character count)
+plt.subplot(1, 2, 2)
+plt.hist(data_df[data_df['label'] == 'ham']['char_count_cleansed'], bins=25, alpha=0.5, label='ham', color='mediumseagreen', density=True)
+plt.hist(data_df[data_df['label'] == 'spam']['char_count_cleansed'], bins=25, alpha=0.5, label='spam', color='tomato', density=True)
 
+# styling
+plt.legend()
+plt.ylabel(ylabel='frequency', fontsize=10, weight='bold')
+plt.xlabel(xlabel='character count', fontsize=10, weight='bold')
+plt.title('Character Count Distribution (normalized) - Cleaned', fontsize=12, weight='bold')
+
+plt.tight_layout()
+
+
+# ----------------------------------------------------------------------------------------------------------------------
+# SPECIAL CHARACTERS
+# ----------------------------------------------------------------------------------------------------------------------
+
+# count special characters and numbers used by label (ham vs spam)
+special_char_sum_by_label = data_df.groupby('label')['special_char_count'].sum()
+print(special_char_sum_by_label)
+
+# as there are more ham messages in the dataset, calculate average because absolute numbers are not meaningful
+# --> ham: 3.830159 // spam: 5.643185 --> spam messages seem to use more special characters on average
+avg_special_char_per_label = data_df.groupby('label')['special_char_count'].mean()
+print(avg_special_char_per_label)
+
+# calculate the ratio of special characters for each message
+# histograms of the text lengths lead to the conclusion that the cleaning of the messages leads to the spam texts
+# being much shorter than before; therefore the ratio is calculated with the original text length
+# --> column also included in preprocessing
+data_df['special_char_ratio'] = data_df['special_char_count'] / data_df['char_count']
+
+# scatter plot to show the relationship between special character and text length
+fig, ax = plt.subplots(figsize=(8, 6))
+
+plt.scatter(
+    data_df[data_df['label'] == 'ham']['char_count'],
+    data_df[data_df['label'] == 'ham']['special_char_count'],
+    alpha=0.5,
+    label='ham',
+    color='mediumseagreen')
+
+plt.scatter(
+    data_df[data_df['label'] == 'spam']['char_count'],
+    data_df[data_df['label'] == 'spam']['special_char_count'],
+    alpha=0.5,
+    label='spam',
+    color='tomato')
+
+# styling
+# y-axis
+ax.set_ylabel('special character count', fontsize=10, weight='bold')
+# x-axis
+ax.set_xlabel('total character count', fontsize=10, weight='bold')
+ax.set_xticklabels(ax.get_xticklabels(), rotation='horizontal')
+# title
+ax.set_title('Special Characters vs Text Length', fontsize=14, weight='bold')
+# other
+plt.legend()
+ax.spines['top'].set_visible(False)
+ax.spines['right'].set_visible(False)
+
+plt.tight_layout()
+plt.show()
+# --> the scatterplot however seems to indicate that there is not really a heavy relation between the usage of special
+# characters and text length between spam vs ham; the text length itself seems to be a bigger factor
 
 
 # ----------------------------------------------------------------------------------------------------------------------
 # WORD CLOUD
 # ----------------------------------------------------------------------------------------------------------------------
+
+# what are the most frequent words?
