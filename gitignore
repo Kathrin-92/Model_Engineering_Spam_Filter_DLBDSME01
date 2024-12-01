@@ -2,7 +2,8 @@
 .idea/workspace.xml
 .DS_Store
 **/.DS_Store
-data/raw/*
+.data/raw/*
+.data/processed/*
 *.pyc
 __pycache__/
 .env
