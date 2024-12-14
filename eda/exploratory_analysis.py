@@ -173,7 +173,7 @@ ham_word_series = pd.Series(ham_words)
 avg_word_count_ham = len(ham_words) / data_df[data_df['label'] == 'ham'].shape[0]
 print(f'Avg. number of words in Ham messages: {avg_word_count_ham}') # 8.051
 
-# spam messages - most frequent words
+# spam messages
 spam_text = data_df[data_df['label'] == 'spam']['message_cleaned'].str.cat(sep=" ")
 spam_words = spam_text.split()
 spam_word_series = pd.Series(spam_words)

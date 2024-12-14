@@ -49,9 +49,9 @@ data['message_cleaned'] = data['message'].apply(lambda x: clean_text(x))
 data['message_cleaned'] = data['message_cleaned'].apply(lambda x: ' '.join(x))
 
 # add several calculated columns based on EDA results
-data['char_count'] = data['message'].apply(lambda x: sum(1 for char in x if char in string.ascii_letters))
-data['char_count_cleansed'] = data['message_cleaned'].apply(lambda x: sum(1 for char in x if char in string.ascii_letters))
-data['special_char_count'] = data['message'].apply(lambda x: sum(1 for char in x if char in string.punctuation))
+data['char_count'] = data['message'].apply(lambda x: float(sum(1 for char in x if char in string.ascii_letters)))
+data['char_count_cleansed'] = data['message_cleaned'].apply(lambda x: float(sum(1 for char in x if char in string.ascii_letters)))
+data['special_char_count'] = data['message'].apply(lambda x: float(sum(1 for char in x if char in string.punctuation)))
 data['special_char_ratio'] = data['special_char_count'] / data['char_count_cleansed']
 data['word_count_cleansed'] = data['message_cleaned'].apply(lambda x: len(x.split()))
 data['word_count_ratio'] = data['word_count_cleansed'] / data['char_count_cleansed']
