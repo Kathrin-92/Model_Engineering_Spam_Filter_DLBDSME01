@@ -7,7 +7,8 @@ import mlflow
 import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import classification_report, accuracy_score, mean_squared_error
+from sklearn.metrics import classification_report, accuracy_score, mean_squared_error, precision_score, recall_score
+import joblib
 
 # ----------------------------------------------------------------------------------------------------------------------
 # LOG MODEL WITH MLFLOW
@@ -44,6 +45,8 @@ with mlflow.start_run():
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42, stratify=y)
     # additionally split training data into validation and training set
     X_train, X_validate, y_train, y_validate = train_test_split(X_train, y_train, test_size=0.25, random_state=42, stratify=y_train)
+    joblib.dump(X_test, 'X_test_baseline.pkl')
+    joblib.dump(y_test, 'y_test_baseline.pkl')
 
     # configure logistic regression model with early stopping; helps to prevent overfitting
     # https://stackoverflow.com/questions/38640109/logistic-regression-python-solvers-definitions
@@ -64,13 +67,19 @@ with mlflow.start_run():
     iteration_numb = logistic_reg_model.n_iter_
     accuracy_score = accuracy_score(y_validate, y_validate_pred)
     mse = mean_squared_error(y_validate, y_validate_pred)
+    precision = precision_score(y_test, y_validate_pred, pos_label=1)
+    recall = recall_score(y_test, y_validate_pred, pos_label=1)
 
     # log everything
     mlflow.log_metric("Number of iterations", iteration_numb)
     mlflow.log_metric("Validation Accuracy", accuracy_score)
     mlflow.log_metric("Validation MSE", mse)
+    mlflow.log_metric("Validation Precision", precision)
+    mlflow.log_metric("Validation Recall", recall)
 
     print("Number of iterations:", iteration_numb)
     print("Validation Accuracy:", accuracy_score)
     print("Validation MSE:", mse)
+    print("Validation Precision:", precision)
+    print("Validation Recall:", recall)
     print("Validation Classification Report:\n", classification_report(y_validate, y_validate_pred))
