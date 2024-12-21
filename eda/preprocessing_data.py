@@ -10,6 +10,11 @@ import string
 # third-party library imports
 import pandas as pd
 import nltk
+import spacy
+
+
+# import the spaCy English language model
+nlp = spacy.load("en_core_web_sm")
 
 # download NLTK data for tokenization & for English stopwords
 # nltk.download('punkt_tab')
@@ -56,6 +61,17 @@ data['special_char_ratio'] = data['special_char_count'] / data['char_count_clean
 data['word_count_cleansed'] = data['message_cleaned'].apply(lambda x: len(x.split()))
 data['word_count_ratio'] = data['word_count_cleansed'] / data['char_count_cleansed']
 data.insert(0, 'label_no', data['label'].apply(lambda x: 1 if x == 'spam' else 0)) # create columns with number for label
+
+
+# define a lemmatizing function for the advanced model training
+def lemmatize_text(text):
+    doc = nlp(text)
+    lemmatized_tokens = [token.lemma_ for token in doc if not token.is_stop and token.is_alpha]
+    return ' '.join(lemmatized_tokens)
+
+
+# apply the lemmatizing function to the pre-cleaned 'message' column
+data['message_cleaned_lemmatized'] = data['message_cleaned'].apply(lambda x: lemmatize_text(x))
 
 # save cleaned data in a csv file
 if not os.path.exists(os.path.join('data/processed', 'data_cleaned.csv')):
