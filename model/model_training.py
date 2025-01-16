@@ -124,7 +124,7 @@ with ((mlflow.start_run())):
     df = pd.read_csv('data/processed/data_cleaned.csv', sep=',')
     df = df.dropna(subset=['message_cleaned'])
 
-    tfidf_vectorizer = TfidfVectorizer() # maybe look into: https://www.deepwizai.com/projects/how-to-correctly-use-tf-idf-with-imbalanced-data
+    tfidf_vectorizer = TfidfVectorizer()
     X = tfidf_vectorizer.fit_transform(df['message_cleaned'])
     y = df['label_no']
 
@@ -134,6 +134,7 @@ with ((mlflow.start_run())):
     X_train_mnb, X_validate_mnb, y_train_mnb, y_validate_mnb = train_test_split(X_train_mnb, y_train_mnb, test_size=0.25, random_state=42, stratify=y_train_mnb)
     joblib.dump(X_test_mnb, 'X_test_mnb.pkl')
     joblib.dump(y_test_mnb, 'y_test_mnb.pkl')
+    joblib.dump(tfidf_vectorizer, 'tfidf_vectorizer.pkl')
 
     # resample only the training data
     resampler = RandomOverSampler(random_state=42)
