@@ -29,7 +29,7 @@ except MlflowException as e:
     print(f"Failed to load model: {str(e)}")
 
 tfidf_vectorizer = joblib.load('tfidf_vectorizer.pkl') # just for test/mockup
-#tfidf_vectorizer = TfidfVectorizer()
+
 
 # ----------------------------------------------------------------------------------------------------------------------
 # START API AND DEFINE INPUT AND OUTPUT
@@ -73,11 +73,8 @@ async def index():
 @app.post('/get_spam_prediction', response_model=list[PredictionResult])
 async def predict(input_data: InputData):
     try:
-        # convert input data to numpy array / reshape / preorocess data
         message = input_data.message
-        #message_transformed = tfidf_vectorizer.fit_transform([message])
         message_transformed = tfidf_vectorizer.transform([message])
-
 
         # make predictions
         spam_probability = mnb_model.predict_proba(message_transformed)[:, 1]
